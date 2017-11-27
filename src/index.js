@@ -101,9 +101,11 @@ class Login {
   getLoginURL() {
     const {redirect_uri, client_id, kc_idp_hint} = this.conf;
     const response_type = 'code';
+    const scope = 'openid';
     const state = uuid.v4();
     const url = this.getRealmURL() + '/protocol/openid-connect/auth?' + querystring.stringify({
       kc_idp_hint,
+      scope,
       redirect_uri,
       client_id,
       response_type,
