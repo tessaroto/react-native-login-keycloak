@@ -10,7 +10,7 @@ export class Login {
   tokenStorage;
 
   constructor() {
-    this.state = {};
+    this.state = {};      scope,  
     this.onOpenURL = this.onOpenURL.bind(this);
     Linking.addEventListener('url', this.onOpenURL);
   }
@@ -35,6 +35,7 @@ export class Login {
   }
 
   end() {
+    // If this is a logout function, you gotta remove it by doing a post or something similar to keycloak.
     return this.tokenStorage.clearTokens();
   }
 
@@ -87,7 +88,9 @@ export class Login {
     const {redirect_uri, client_id, kc_idp_hint} = this.conf;
     const response_type = 'code';
     const state = uuidv4();
+    const scope = 'openid';
     const url = this.getRealmURL() + '/protocol/openid-connect/auth?' + querystring.stringify({
+      scope,        
       kc_idp_hint,
       redirect_uri,
       client_id,
