@@ -1,10 +1,8 @@
-import {
-  Linking,
-} from 'react-native';
+import { Linking } from 'react-native';
 import * as querystring from 'query-string';
 import uuidv4 from 'uuid/v4';
 import {
-  decodeToken,
+  decodeToken as decodeTokenImported,
 } from './util';
 
 
@@ -41,31 +39,35 @@ export class Login {
       }));
     }
 
+    setConf(conf) {
+      this.conf = conf;
+    }
+
     end() {
       const {
         client_id,
-        redirect_uri,
       } = this.conf;
         // If this is a logout function, you gotta remove it by doing a post or something similar to keycloak.
       const headers = new Headers();
       headers.set('Content-Type', 'application/x-www-form-urlencoded');
-      this.tokens().then((savedTokens) => {
+      return this.tokens().then((savedTokens) => {
+        if (!savedTokens) {
+          throw new Error('No saved tokens');
+        }
         const body = querystring.stringify({
           client_id,
           refresh_token: savedTokens.refresh_token,
         });
 
         const url = `${this.getRealmURL()}/protocol/openid-connect/logout`;
-        fetch(url, {
+        return fetch(url, {
           method: 'POST',
           headers,
           body,
         }).then((response) => {
           if (response.ok) {
             this.tokenStorage.clearTokens();
-            return true;
           }
-          return false;
         });
       });
     }
@@ -105,11 +107,9 @@ export class Login {
         body,
       }).then((response) => {
         response.json().then((json) => {
-          // console.log(json);
           if (json.error) {
             this.state.reject(json);
           } else {
-            // console.log(json);
             this.tokenStorage.saveTokens(json);
             this.state.resolve(json);
           }
@@ -117,8 +117,25 @@ export class Login {
       });
     }
 
+    retrieveUserInfo() {
+      return this.tokens().then((savedTokens) => {
+        if (!savedTokens) {
+          throw new Error('no tokens found');
+        }
+        const headers = new Headers();
+        headers.set('Content-Type', 'application/x-www-form-urlencoded');
+        headers.set('Authorization', `Bearer ${savedTokens.access_token}`);
+
+        const url = `${this.getRealmURL()}/protocol/openid-connect/userinfo`;
+        return fetch(url, {
+          method: 'GET',
+          headers,
+        }).then(response => response.json()).catch(() => {});
+      });
+    }
+
     decodeToken(token) {
-      return decodeToken(token);
+      return decodeTokenImported(token);
     }
 
     getRealmURL() {
