@@ -1,55 +1,50 @@
 import { Linking } from 'react-native';
 import * as querystring from 'query-string';
 import uuidv4 from 'uuid/v4';
-import {
-  decodeToken as decodeTokenImported,
-} from './util';
+import { decodeToken } from './util';
 
 
 export class Login {
     state;
     conf;
     tokenStorage;
+    headers;
+    decodeToken;
 
     constructor() {
       this.state = {};
       this.onOpenURL = this.onOpenURL.bind(this);
       Linking.addEventListener('url', this.onOpenURL);
+      this.headers = new Headers();
+      this.headers.set('Content-Type', 'application/x-www-form-urlencoded');
+      this.decodeToken = decodeToken;
     }
 
-    tokens() {
+    getTokens() {
       return this.tokenStorage.loadTokens();
     }
 
-    start(conf) {
-      this.conf = conf;
+    startLoginProcess(conf) {
+      this.setConf(conf);
       return new Promise(((resolve, reject) => {
-        const {
-          url,
-          state,
-        } = this.getLoginURL();
+        const { url, state } = this.getLoginURL();
         this.state = {
           ...this.state,
           resolve,
           reject,
           state,
         };
-
         Linking.openURL(url);
       }));
     }
 
     setConf(conf) {
-      this.conf = conf;
+      this.conf = (conf) || undefined;
     }
 
-    end() {
-      const {
-        client_id,
-      } = this.conf;
-        // If this is a logout function, you gotta remove it by doing a post or something similar to keycloak.
-      const headers = new Headers();
-      headers.set('Content-Type', 'application/x-www-form-urlencoded');
+    logoutKc() {
+      const { client_id } = this.conf;
+
       return this.tokens().then((savedTokens) => {
         if (!savedTokens) {
           throw new Error('No saved tokens');
@@ -62,7 +57,7 @@ export class Login {
         const url = `${this.getRealmURL()}/protocol/openid-connect/logout`;
         return fetch(url, {
           method: 'POST',
-          headers,
+          headers: this.headers,
           body,
         }).then((response) => {
           if (response.ok) {
@@ -91,9 +86,6 @@ export class Login {
       } = this.conf;
       const url = `${this.getRealmURL()}/protocol/openid-connect/token`;
 
-      const headers = new Headers();
-      headers.set('Content-Type', 'application/x-www-form-urlencoded');
-
       const body = querystring.stringify({
         grant_type: 'authorization_code',
         redirect_uri,
@@ -103,7 +95,7 @@ export class Login {
 
       fetch(url, {
         method: 'POST',
-        headers,
+        headers: this.headers,
         body,
       }).then((response) => {
         response.json().then((json) => {
@@ -122,20 +114,14 @@ export class Login {
         if (!savedTokens) {
           throw new Error('no tokens found');
         }
-        const headers = new Headers();
-        headers.set('Content-Type', 'application/x-www-form-urlencoded');
-        headers.set('Authorization', `Bearer ${savedTokens.access_token}`);
+        this.headers.set('Authorization', `Bearer ${savedTokens.access_token}`);
 
         const url = `${this.getRealmURL()}/protocol/openid-connect/userinfo`;
         return fetch(url, {
           method: 'GET',
-          headers,
+          headers: this.headers,
         }).then(response => response.json()).catch(() => {});
       });
-    }
-
-    decodeToken(token) {
-      return decodeTokenImported(token);
     }
 
     getRealmURL() {
@@ -148,12 +134,8 @@ export class Login {
     }
 
     getLoginURL() {
-      const {
-        redirect_uri,
-        client_id,
-        kc_idp_hint,
-      } = this.conf;
-      const response_type = 'code';
+      const { redirect_uri, client_id, kc_idp_hint } = this.conf;
+      const responseType = 'code';
       const state = uuidv4();
       const scope = 'openid';
       const url = `${this.getRealmURL()}/protocol/openid-connect/auth?${querystring.stringify({
@@ -161,7 +143,7 @@ export class Login {
         kc_idp_hint,
         redirect_uri,
         client_id,
-        response_type,
+        response_type: responseType,
         state,
       })}`;
 
