@@ -7,18 +7,18 @@ export function decodeToken(token) {
   str = str.replace('/_/g', '/');
   switch (str.length % 4) {
     case 0:
-    break;
+      break;
     case 2:
       str += '==';
-    break;
+      break;
     case 3:
       str += '=';
-    break;
+      break;
     default:
-      throw 'Invalid token';
+      throw new Error('Invalid token');
   }
 
-  str = (str + '===').slice(0, str.length + (str.length % 4));
+  str = (`${str}===`).slice(0, str.length + (str.length % 4));
   str = str.replace(/-/g, '+').replace(/_/g, '/');
 
   str = decodeURIComponent(escape(base64.decode(str)));

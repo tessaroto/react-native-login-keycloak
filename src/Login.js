@@ -1,23 +1,28 @@
 import { Linking } from 'react-native';
 import * as querystring from 'query-string';
 import uuidv4 from 'uuid/v4';
-import { decodeToken } from './util';
-
 
 export class Login {
     state;
     conf;
     tokenStorage;
     headers;
-    decodeToken;
 
     constructor() {
       this.state = {};
       this.onOpenURL = this.onOpenURL.bind(this);
       Linking.addEventListener('url', this.onOpenURL);
-      this.headers = new Headers();
-      this.headers.set('Content-Type', 'application/x-www-form-urlencoded');
-      this.decodeToken = decodeToken;
+
+      this.props = {
+        requestOptions: {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          method: 'GET',
+          body: undefined,
+        },
+        url: '',
+      };
     }
 
     getTokens() {
@@ -39,32 +44,29 @@ export class Login {
     }
 
     setConf(conf) {
-      this.conf = (conf) || undefined;
+      if (conf) {
+        this.conf = conf;
+      }
     }
 
-    logoutKc() {
+    async logoutKc() {
       const { client_id } = this.conf;
+      const savedTokens = await this.getTokens();
+      if (!savedTokens) {
+        return undefined;
+      }
 
-      return this.tokens().then((savedTokens) => {
-        if (!savedTokens) {
-          throw new Error('No saved tokens');
-        }
-        const body = querystring.stringify({
-          client_id,
-          refresh_token: savedTokens.refresh_token,
-        });
+      this.props.url = `${this.getRealmURL()}/protocol/openid-connect/logout`;
 
-        const url = `${this.getRealmURL()}/protocol/openid-connect/logout`;
-        return fetch(url, {
-          method: 'POST',
-          headers: this.headers,
-          body,
-        }).then((response) => {
-          if (response.ok) {
-            this.tokenStorage.clearTokens();
-          }
-        });
-      });
+      this.setRequestOptions('POST', querystring.stringify({ client_id, refresh_token: savedTokens.refresh_token }));
+
+      const fullResponse = await fetch(this.props.url, this.props.requestOptions);
+
+      if (fullResponse.ok) {
+        this.tokenStorage.clearTokens();
+        return true;
+      }
+      return false;
     }
 
     onOpenURL(event) {
@@ -79,56 +81,67 @@ export class Login {
       }
     }
 
-    retrieveTokens(code) {
-      const {
-        redirect_uri,
-        client_id,
-      } = this.conf;
-      const url = `${this.getRealmURL()}/protocol/openid-connect/token`;
 
-      const body = querystring.stringify({
-        grant_type: 'authorization_code',
-        redirect_uri,
-        client_id,
-        code,
-      });
+    async retrieveTokens(code) {
+      const { redirect_uri, client_id } = this.conf;
+      this.props.url = `${this.getRealmURL()}/protocol/openid-connect/token`;
 
-      fetch(url, {
-        method: 'POST',
-        headers: this.headers,
-        body,
-      }).then((response) => {
-        response.json().then((json) => {
-          if (json.error) {
-            this.state.reject(json);
-          } else {
-            this.tokenStorage.saveTokens(json);
-            this.state.resolve(json);
-          }
-        });
-      });
+      this.setRequestOptions('POST', querystring.stringify({
+        grant_type: 'authorization_code', redirect_uri, client_id, code,
+      }));
+
+      const fullResponse = await fetch(this.props.url, this.props.requestOptions);
+      const jsonResponse = await fullResponse.json();
+      if (fullResponse.ok) {
+        this.tokenStorage.saveTokens(jsonResponse);
+        this.state.resolve(jsonResponse);
+      } else {
+        this.state.reject(jsonResponse);
+      }
     }
 
-    retrieveUserInfo() {
-      return this.tokens().then((savedTokens) => {
-        if (!savedTokens) {
-          throw new Error('no tokens found');
-        }
-        this.headers.set('Authorization', `Bearer ${savedTokens.access_token}`);
+    async retrieveUserInfo() {
+      const savedTokens = await this.getTokens();
+      if (savedTokens) {
+        this.props.url = `${this.getRealmURL()}/protocol/openid-connect/userinfo`;
 
-        const url = `${this.getRealmURL()}/protocol/openid-connect/userinfo`;
-        return fetch(url, {
-          method: 'GET',
-          headers: this.headers,
-        }).then(response => response.json()).catch(() => {});
-      });
+        this.setHeader('Authorization', `Bearer ${savedTokens.access_token}`);
+        this.setRequestOptions('GET');
+
+        const fullResponse = await fetch(this.props.url, this.props.requestOptions);
+        if (fullResponse.ok) {
+          return fullResponse.json();
+        }
+      }
+      return undefined;
+    }
+
+    async refreshToken() {
+      const savedTokens = await this.getTokens();
+      if (!savedTokens) {
+        return undefined;
+      }
+
+      const { client_id } = this.conf;
+      this.props.url = `${this.getRealmURL()}/protocol/openid-connect/token`;
+
+      this.setRequestOptions('POST', querystring.stringify({
+        grant_type: 'refresh_token',
+        refresh_token: savedTokens.refresh_token,
+        client_id: encodeURIComponent(client_id),
+      }));
+
+      const fullResponse = await fetch(this.props.url, this.props.requestOptions);
+      if (fullResponse.ok) {
+        const jsonResponse = await fullResponse.json();
+        this.tokenStorage.saveTokens(jsonResponse);
+        return jsonResponse;
+      }
+      return undefined;
     }
 
     getRealmURL() {
-      const {
-        url,
-        realm,
-      } = this.conf;
+      const { url, realm } = this.conf;
       const slash = url.endsWith('/') ? '' : '/';
       return `${url + slash}realms/${encodeURIComponent(realm)}`;
     }
@@ -155,5 +168,17 @@ export class Login {
 
     setTokenStorage(tokenStorage) {
       this.tokenStorage = tokenStorage;
+    }
+
+    setRequestOptions(method, body) {
+      this.props.requestOptions = {
+        ...this.props.requestOptions,
+        method,
+        body,
+      };
+    }
+
+    setHeader(key, value) {
+      this.props.requestOptions.headers[key] = value;
     }
 }
