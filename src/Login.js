@@ -6,7 +6,6 @@ export class Login {
     state;
     conf;
     tokenStorage;
-    headers;
 
     constructor() {
       this.state = {};
@@ -16,6 +15,7 @@ export class Login {
       this.props = {
         requestOptions: {
           headers: {
+            Accept: 'application/json',
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           method: 'GET',
