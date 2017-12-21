@@ -1,64 +1,58 @@
 # React Native Login
-
-React Native Login is a module for [React Native](https://facebook.github.io/react-native/) for implementing lightweight universal authentication using [Keycloak](http://keycloak.org)
-
-
-See [Simple social login for React Native apps](https://medium.com/@ak1394/simple-social-login-for-react-native-apps-71279bf80ffc) for details.
+This is a fork of ak1394's React-Native-Login module. It's a version that I'm planning to maintenance more than it's been with ak1394.
 
 ## Documentation
 
-- [Install](https://github.com/ak1394/react-native-login#install)
-- [Usage](https://github.com/ak1394/react-native-login#usage)
-- [Example](https://github.com/ak1394/react-native-login#example)
-- [License](https://github.com/ak1394/react-native-login#license)
+- [Install](https://github.com/mahomahoxd/react-native-login#install)
+- [Usage](https://github.com/mahomahoxd/react-native-login#usage)
 
 ## Install
 
 ```shell
-npm install --save react-native-login
+npm i --save react-native-login-keycloak
 ```
 
 ## Usage
 
 ### App configuration
 
-Please configure [Linking](https://facebook.github.io/react-native/docs/linking.html) module, including steps for handling Universal links.
+Please configure [Linking](https://facebook.github.io/react-native/docs/linking.html) module, including steps for handling Universal links (This might get changed due to not being able to close the tab on leave, ending up with a lot of tabs in the browser).
 
-Also, add applinks:<APPSITE HOST> entry to Associated Domains Capability of your app.
+Also, add the applinks:<APPSITE HOST> entry to the Associated Domains Capability of your app.
 
 
 ### Imports
 
 ```js
-import Login from 'react-native-login';
+import Login from 'react-native-login-keycloak';
 ```
 
-### Checking if user is logged in
+### Checking if tokens are saved on the device
 
 ```js
-Login.tokens().then(tokens => {
-  console.log(tokens);
-});
+const gatheredTokens = await Login.getTokens();
+console.log(gatheredTokens);
 
 // Prints:
 //
 // { access_token: '...', refresh_token: '...', id_token: '...', ...}
+// OR
+// undefined
 ```
 
 ### Login
-
 ```js
 
 const config = {
   url: 'https://<KEYCLOAK_HOST>/auth',
   realm: '<REALM NAME>',
-  client_id: '<CLIENT ID>',
-  redirect_uri: 'https://<REDIRECT HOST>/success.html',
-  appsite_uri: 'https://<APPSITE HOST>/app.html',
-  kc_idp_hint: 'facebook',
+  clientId: '<CLIENT ID>',
+  redirectUri: 'https://<REDIRECT HOST>/success.html',
+  appsiteUri: 'https://<APPSITE HOST>/app.html',
+  kcIdpHint: 'facebook', // *optional*
 };
 
-Login.start(config).then(tokens => {
+Login.startLoginProcess(config).then(tokens => {
   console.log(tokens);
 });
 
@@ -67,44 +61,40 @@ Login.start(config).then(tokens => {
 // { access_token: '...', refresh_token: '...', id_token: '...', ...}
 ```
 
-Initiates login flow. Upon successfull completion, saves and returns a set of tokens.
+Logging in by the startLoginProcess function will save it in the AsyncStorage, whereas after its been successful, getTokens will get the most recent tokens that are saved and you can then use it to authenticate against a backend.
+
+### Refreshing the token
+```js
+const refreshedTokens = await Login.refreshToken();
+console.log(refreshTokens);
+// Prints:
+//
+// { access_token: '...', refresh_token: '...', id_token: '...', ...}
+// OR
+// undefined
+```
+
+
+
+### Retrieving logged in user info
+```js
+const loggedInUser = await Login.retrieveUserInfo();
+console.log(loggedInUser);
+
+// Prints:
+//
+// { sub: '...',name: '... ',preferred_username: '...',given_name: '...' }
+
+// OR
+// undefined
+```
+
 
 ### Logout
 
 ```js
-Login.end();
+Login.logoutKc();
 ```
+Removes stored tokens. Will also do a Keycloak call to log the user out. Returns true on logout, else false. Subsequent calls to Login.tokens() will return null.
 
-Removes stored tokens. Subsequent calls to Login.tokens() will return null.
-
-## Example
-
-Please see the example app [react-native-login-example](https://github.com/ak1394/react-native-login-example)
-
-## License
-
-The MIT License (MIT)
-=====================
-
-Copyright © `2016` `Anton Krasovsky`
-
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation
-files (the “Software”), to deal in the Software without
-restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the
-Software is furnished to do so, subject to the following
-conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
+If you got any improvements feel free to make a pull request or suggestion.

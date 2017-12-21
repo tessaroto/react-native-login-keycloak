@@ -50,7 +50,7 @@ export class Login {
     }
 
     async logoutKc() {
-      const { client_id } = this.conf;
+      const { clientId } = this.conf;
       const savedTokens = await this.getTokens();
       if (!savedTokens) {
         return undefined;
@@ -58,7 +58,10 @@ export class Login {
 
       this.props.url = `${this.getRealmURL()}/protocol/openid-connect/logout`;
 
-      this.setRequestOptions('POST', querystring.stringify({ client_id, refresh_token: savedTokens.refresh_token }));
+      this.setRequestOptions(
+        'POST',
+        querystring.stringify({ client_id: clientId, refresh_token: savedTokens.refresh_token }),
+      );
 
       const fullResponse = await fetch(this.props.url, this.props.requestOptions);
 
@@ -83,12 +86,15 @@ export class Login {
 
 
     async retrieveTokens(code) {
-      const { redirect_uri, client_id } = this.conf;
+      const { redirectUri, clientId } = this.conf;
       this.props.url = `${this.getRealmURL()}/protocol/openid-connect/token`;
 
-      this.setRequestOptions('POST', querystring.stringify({
-        grant_type: 'authorization_code', redirect_uri, client_id, code,
-      }));
+      this.setRequestOptions(
+        'POST',
+        querystring.stringify({
+          grant_type: 'authorization_code', redirect_uri: redirectUri, client_id: clientId, code,
+        }),
+      );
 
       const fullResponse = await fetch(this.props.url, this.props.requestOptions);
       const jsonResponse = await fullResponse.json();
@@ -122,13 +128,13 @@ export class Login {
         return undefined;
       }
 
-      const { client_id } = this.conf;
+      const { clientId } = this.conf;
       this.props.url = `${this.getRealmURL()}/protocol/openid-connect/token`;
 
       this.setRequestOptions('POST', querystring.stringify({
         grant_type: 'refresh_token',
         refresh_token: savedTokens.refresh_token,
-        client_id: encodeURIComponent(client_id),
+        client_id: encodeURIComponent(clientId),
       }));
 
       const fullResponse = await fetch(this.props.url, this.props.requestOptions);
@@ -147,15 +153,15 @@ export class Login {
     }
 
     getLoginURL() {
-      const { redirect_uri, client_id, kc_idp_hint } = this.conf;
+      const { redirectUri, clientId, kcIdpHint } = this.conf;
       const responseType = 'code';
       const state = uuidv4();
       const scope = 'openid';
       const url = `${this.getRealmURL()}/protocol/openid-connect/auth?${querystring.stringify({
         scope,
-        kc_idp_hint,
-        redirect_uri,
-        client_id,
+        kc_idp_hint: kcIdpHint,
+        redirect_uri: redirectUri,
+        client_id: clientId,
         response_type: responseType,
         state,
       })}`;

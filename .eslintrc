@@ -2,6 +2,7 @@
   "parser": "babel-eslint",
   "extends": "airbnb",
   "globals": {
+    "fetch": true,
     "__DEV__": true
   },
   "env": {
@@ -12,9 +13,15 @@
     "import/no-extraneous-dependencies": 0,
     "import/no-unresolved": 0,
     "import/prefer-default-export": 0,
-    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
     "react/prefer-stateless-function": 0,
-    "max-len": ["error",{ "code":120 }],
+    "max-len": ["error",{ "code":120 }]
   },
-  "plugins": ["react"]
+  "settings": {
+      "import/resolver": {
+          "node": {
+            "extensions": [".js", ".android.js", ".ios.js"]
+          }
+      }
+  },
+  "plugins": ["react", "react-native"]
 }

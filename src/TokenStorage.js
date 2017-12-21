@@ -11,7 +11,7 @@ export class TokenStorage {
   }
 
   loadTokens() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       AsyncStorage.getItem(this.key).then(value => resolve(JSON.parse(value)));
     });
   }
