@@ -1,14 +1,14 @@
 {
-  "name": "react-native-login",
-  "version": "0.0.1-alpha.2",
-  "description": "React Native module for lightweight universal authentication using Keycloak",
+  "name": "react-native-login-keycloak",
+  "version": "1.0.0",
+  "description": "React Native module for authentication between a client and the keycloak server.",
   "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ak1394/react-native-login.git"
+    "url": "git+https://github.com/mahomahoxd/react-native-login-keycloak.git"
   },
   "keywords": [
     "auth",
@@ -26,9 +26,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ak1394/react-native-login/issues"
+    "url": "https://github.com/mahomahoxd/react-native-login-keycloak/issues"
   },
-  "homepage": "https://github.com/ak1394/react-native-login#readme",
+  "homepage": "https://github.com/mahomahoxd/react-native-login-keycloak#readme",
   "dependencies": {
     "base-64": "^0.1.0",
     "eslint-plugin-react": "^7.5.1",
