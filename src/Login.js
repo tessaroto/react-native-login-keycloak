@@ -73,7 +73,7 @@ export class Login {
     }
 
     onOpenURL(event) {
-      if (event.url.startsWith(this.conf.appsite_uri)) {
+      if (event.url.startsWith(this.conf.appsiteUri)) {
         const {
           state,
           code,

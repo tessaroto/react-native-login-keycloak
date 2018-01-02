@@ -10,10 +10,9 @@ export class TokenStorage {
     return AsyncStorage.setItem(this.key, JSON.stringify(tokens));
   }
 
-  loadTokens() {
-    return new Promise((resolve) => {
-      AsyncStorage.getItem(this.key).then(value => resolve(JSON.parse(value)));
-    });
+  async loadTokens() {
+    const tokens = await AsyncStorage.getItem(this.key);
+    return (tokens) ? JSON.parse(tokens) : undefined;
   }
 
   clearTokens() {
