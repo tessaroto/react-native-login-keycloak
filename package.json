@@ -1,6 +1,6 @@
 {
   "name": "react-native-login-keycloak",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "React Native module for authentication between a client and the keycloak server.",
   "main": "src/index.js",
   "scripts": {
@@ -33,7 +33,6 @@
     "base-64": "^0.1.0",
     "eslint-plugin-react": "^7.5.1",
     "query-string": "^5.0.1",
-    "react-native": "^0.51.0",
     "uuid": "^3.1.0"
   },
   "devDependencies": {
