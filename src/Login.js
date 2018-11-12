@@ -153,7 +153,7 @@ export class Login {
     }
 
     getLoginURL() {
-      const { redirectUri, clientId, kcIdpHint } = this.conf;
+      const { redirectUri, clientId, kcIdpHint,options } = this.conf;
       const responseType = 'code';
       const state = uuidv4();
       const scope = 'openid';
@@ -163,6 +163,7 @@ export class Login {
         redirect_uri: redirectUri,
         client_id: clientId,
         response_type: responseType,
+        options:options,
         state,
       })}`;
 
