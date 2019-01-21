@@ -1,6 +1,7 @@
 import { Linking } from 'react-native';
 import * as querystring from 'query-string';
 import uuidv4 from 'uuid/v4';
+import {decodeToken} from './Utils';
 
 export class Login {
     state;
@@ -146,6 +147,10 @@ export class Login {
       return undefined;
     }
 
+    decodeToken(token) {
+      return decodeToken(token);
+    }
+    
     getRealmURL() {
       const { url, realm } = this.conf;
       const slash = url.endsWith('/') ? '' : '/';
